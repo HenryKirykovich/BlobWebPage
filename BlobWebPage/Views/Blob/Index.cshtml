@@ -1,0 +1,67 @@
+@model BlobWebPage.Models.ResourceListViewModel
+
+@{
+    ViewData["Title"] = "Class Resource Library";
+
+    // Message shown when the selected category has no files
+    var emptyMessage = Model.Filter switch
+    {
+        "notes" => "No files in the Notes category yet.",
+        "examples" => "No files in the Examples category yet.",
+        _ => "No files have been uploaded yet."
+    };
+}
+
+<h1>Class Resource Library</h1>
+
+@if (TempData["Message"] != null)
+{
+    <div class="alert alert-info">@TempData["Message"]</div>
+}
+
+<h2>Upload a resource</h2>
+@* asp-action adds the hidden antiforgery token to this POST form *@
+<form method="post" enctype="multipart/form-data" asp-action="UploadFile">
+    <label for="resource-file">File</label>
+    <input id="resource-file" name="file" type="file" required>
+
+    <label for="upload-category">Category</label>
+    <select id="upload-category" name="category" required>
+        <option value="notes">Notes</option>
+        <option value="examples">Examples</option>
+    </select>
+
+    <button type="submit">Upload</button>
+</form>
+
+<h2>Browse resources</h2>
+@* GET form: the selected value goes to Index(string filter) in the URL *@
+<form method="get" asp-action="Index">
+    <label for="resource-filter">Show</label>
+    <select id="resource-filter" name="filter">
+        <option value="all" selected="@(Model.Filter == "all")">All</option>
+        <option value="notes" selected="@(Model.Filter == "notes")">Notes</option>
+        <option value="examples" selected="@(Model.Filter == "examples")">Examples</option>
+    </select>
+    <button type="submit">Apply filter</button>
+</form>
+
+<ul id="resource-list">
+    @foreach (var name in Model.Files)
+    {
+        <li>
+            @name
+            <a asp-action="DownloadFile" asp-route-fileName="@name">Download</a>
+            <form method="post" asp-action="DeleteFile" style="display:inline">
+                <input type="hidden" name="fileName" value="@name" />
+                <input type="hidden" name="filter" value="@Model.Filter" />
+                <button type="submit">Delete</button>
+            </form>
+        </li>
+    }
+</ul>
+
+@if (!Model.Files.Any())
+{
+    <p id="empty-message">@emptyMessage</p>
+}
